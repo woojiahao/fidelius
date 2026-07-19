@@ -51,8 +51,27 @@ export function AuthProvider({ children }: PropsWithChildren<object>) {
   useEffect(() => {
     ; (async () => {
       const hasCredentials = await bitwardenService.hasCredentials()
-      console.log(hasCredentials)
-      setState(hasCredentials ? 'locked' : 'setup')
+      if (!hasCredentials) {
+        setState('setup')
+        return
+      }
+
+      const status = await bitwardenService.status()
+      // If the status is anything but locked or unlocked, we should discard the existing credentials
+      if (status !== "locked" && status !== "unlocked") {
+        await bitwardenService.clearCredentials()
+        setState("unavailable")
+        return
+      }
+
+      setState(() => {
+        switch (status) {
+          case "locked":
+            return "locked"
+          case "unlocked":
+            return "connected"
+        }
+      })
     })()
   }, [bitwardenService])
 
@@ -76,8 +95,8 @@ export function AuthProvider({ children }: PropsWithChildren<object>) {
 
   const unlock = useCallback(
     async (password: string) => {
-      const token = await bitwardenService.unlock(password)
-      setState('connected')
+      const outcome = await bitwardenService.unlock(password)
+      setState(outcome ? 'connected' : 'unavailable')
     },
     [bitwardenService]
   )

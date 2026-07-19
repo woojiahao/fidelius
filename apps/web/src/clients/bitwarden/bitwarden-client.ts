@@ -65,8 +65,12 @@ export class BitwardenClient {
     path: string
   ): Promise<Response> {
     try {
-      return await fetch(new URL(path, credentials.serverUrl), {
+      // TODO: Support localhost or production URL
+      return await fetch(new URL(path, "http://localhost:3000"), {
         method: 'GET',
+        headers: {
+          "X-Bitwarden-Url": credentials.serverUrl
+        }
       })
     } catch {
       throw new ServerUnavailableError()
@@ -80,12 +84,14 @@ export class BitwardenClient {
     init?: RequestInit
   ): Promise<Response> {
     try {
-      return await fetch(new URL(path, credentials.serverUrl), {
+      // TODO: Support localhost or production URL
+      return await fetch(new URL(path, "http://localhost:3000"), {
         ...init,
         body: JSON.stringify(body),
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          "X-Bitwarden-Url": credentials.serverUrl
         },
       })
     } catch {

@@ -27,13 +27,15 @@ export default function LockedPage() {
         return
       }
 
-      if (password.toString().trim() === '') {
+      const passwordString = password.toString()
+
+      if (passwordString.trim() === '') {
         setError('Password cannot be empty')
         return
       }
 
       try {
-        unlock(password.toString())
+        unlock(passwordString)
       } catch (e) {
         setError(String(e))
       }
@@ -59,7 +61,7 @@ export default function LockedPage() {
                 id="password"
                 name="password"
                 type="password"
-                placeholder="Local password to access vault"
+                placeholder="Master password to access vault"
                 required
               />
             </Field>
