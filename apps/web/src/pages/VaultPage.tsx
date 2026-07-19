@@ -1,6 +1,7 @@
 import type { BitwardenFolder } from '@/clients/bitwarden/models/folder'
 import type { BitwardenItem } from '@/clients/bitwarden/models/item'
 import type { BitwardenStatus } from '@/clients/bitwarden/models/status'
+import { useBitwardenMoveItemToFolder } from '@/clients/bitwarden/mutations/useBitwardenMoveItemToFolder'
 import { useBitwardenFolders } from '@/clients/bitwarden/queries/useBitwardenFolders'
 import { useBitwardenItems } from '@/clients/bitwarden/queries/useBitwardenItems'
 import { useBitwardenStatus } from '@/clients/bitwarden/queries/useBitwardenStatus'
@@ -25,6 +26,21 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useCallback, useMemo, useState } from 'react'
@@ -63,7 +79,12 @@ type VaultPageInnerProps = {
 function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
   const folderNames = useMemo(
     () => Object.fromEntries(folders.map((folder) => [folder.id, folder.name])),
-    []
+    [folders]
+  )
+
+  const itemNames = useMemo(
+    () => Object.fromEntries(items.map((item) => [item.id, item.name])),
+    [items]
   )
 
   const [selectedItems, setSelectedItems] = useState<string[]>([])
@@ -126,6 +147,20 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
               {selectedItems.length > 0 &&
                 ` (${selectedItems.length} selected)`}
             </CardTitle>
+            <CardAction>
+              {selectedItems.length > 0 && (
+                <ButtonGroup>
+                  <MoveToFolderDialog
+                    folderItems={folders.map((folder) => ({
+                      label: folder.name,
+                      value: folder.id,
+                    }))}
+                    selectedItems={selectedItems}
+                    itemNames={itemNames}
+                  />
+                </ButtonGroup>
+              )}
+            </CardAction>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {items.map((item) => (
@@ -141,6 +176,84 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
         </Card>
       </div>
     </div>
+  )
+}
+
+function MoveToFolderDialog({
+  selectedItems,
+  itemNames,
+  folderItems,
+}: {
+  selectedItems: string[]
+  itemNames: { [key: string]: string }
+  folderItems: { label: string; value: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const moveItemToFolderMutation = useBitwardenMoveItemToFolder()
+
+  const moveItemsToFolder = useCallback(
+    async (items: string[], folderId: string | null) => {
+      setLoading(true)
+      for (const item of items) {
+        await moveItemToFolderMutation.mutateAsync({
+          itemId: item,
+          folderId: folderId ?? '',
+        })
+      }
+
+      setOpen(false)
+      setLoading(false)
+    },
+    [moveItemToFolderMutation]
+  )
+
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <Button variant="outline" onClick={() => setOpen(true)}>
+            <FolderInputIcon />
+            Move to folder
+          </Button>
+        }
+      />
+      <DialogContent className="sm:max-w-md">
+        <DialogTitle>Move item(s) to folder</DialogTitle>
+        <DialogDescription>
+          Move the following items into the same folder:
+          <ul>
+            {selectedItems.map((itemId) => (
+              <li key={itemId}>- {itemNames[itemId]}</li>
+            ))}
+          </ul>
+        </DialogDescription>
+        <Select items={folderItems} onValueChange={setSelectedFolderId}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a folder" />
+          </SelectTrigger>
+          <SelectContent>
+            {folderItems.map((folderItem) => (
+              <SelectItem key={folderItem.value} value={folderItem.value}>
+                {folderItem.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <DialogFooter>
+          <ButtonGroup>
+            <Button
+              onClick={() => moveItemsToFolder(selectedItems, selectedFolderId)}
+              disabled={loading}
+            >
+              {loading ? <Spinner /> : "Move to folder"}
+            </Button>
+          </ButtonGroup>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -182,16 +295,18 @@ function ItemRow({
       onClick={selectItem}
     >
       <div className="flex flex-row gap-3 items-center">
-        <Checkbox checked={checked} />
+        <Checkbox onCheckedChange={selectItem} checked={checked} />
         {item.type === 'card' && <WalletCardsIcon width={16} />}
         {item.type === 'secure-note' && <StickyNoteIcon width={16} />}
         {item.type === 'login' && <KeySquareIcon width={16} />}
         {item.type === 'identity' && <PersonStandingIcon width={16} />}
         <div className="flex flex-col gap-1">
           <p className="text-base">{item.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {folders[item.folderId]}
-          </p>
+          {item.folderId != null && (
+            <p className="text-xs text-muted-foreground">
+              {folders[item.folderId]}
+            </p>
+          )}
         </div>
       </div>
 

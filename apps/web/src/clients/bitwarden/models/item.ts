@@ -1,8 +1,8 @@
 export type BitwardenItemTemplateDto = {
   id: string
-  organizationId: string
+  organizationId: string | null
   collectionIds: string[]
-  folderId: string
+  folderId: string | null
   type: 1 | 2 | 3 | 4
   name: string
   notes: string
@@ -71,29 +71,48 @@ export type BitwardenItemsDto = {
   }
 }
 
+export type BitwardenItemDto = {
+  success: boolean
+  data: BitwardenItemTemplateDto
+}
+
 type BitwardenItemType = 'login' | 'secure-note' | 'card' | 'identity'
+
+function getType(item: BitwardenItemTemplateDto): BitwardenItemType {
+  if (item.login != null) return 'login'
+  if (item.secureNote != null) return 'secure-note'
+  if (item.card != null) return 'card'
+  if (item.identity != null) return 'identity'
+  return 'login'
+}
 
 export type BitwardenItem = {
   id: string
-  organizationId: string
+  organizationId: string | null
   collectionIds: string[]
-  folderId: string
+  folderId: string | null
   type: BitwardenItemType
   name: string
   favorite: boolean
 }
 
+export function bitwardenItemDtoToModel(dto: BitwardenItemDto): BitwardenItem {
+  const dtoItem = dto.data
+
+  return {
+    id: dtoItem.id,
+    organizationId: dtoItem.organizationId,
+    collectionIds: dtoItem.collectionIds,
+    folderId: dtoItem.folderId,
+    type: getType(dtoItem),
+    name: dtoItem.name,
+    favorite: dtoItem.favorite,
+  }
+}
+
 export function bitwardenItemsDtoToModel(
   dto: BitwardenItemsDto
 ): BitwardenItem[] {
-  const getType = (item: BitwardenItemTemplateDto): BitwardenItemType => {
-    if (item.login != null) return 'login'
-    if (item.secureNote != null) return 'secure-note'
-    if (item.card != null) return 'card'
-    if (item.identity != null) return 'identity'
-    return 'login'
-  }
-
   return dto.data.data.map((dtoItem) => ({
     id: dtoItem.id,
     organizationId: dtoItem.organizationId,
