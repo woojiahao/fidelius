@@ -16,14 +16,16 @@ export default function App() {
 export function AppInner() {
   const { state } = useAuth()
 
-  switch (state.status) {
+  switch (state) {
     case 'loading':
       return <LoadingPage />
     case 'setup':
       return <SetupPage />
     case 'locked':
       return <LockedPage />
-    case 'authenticated':
+    case 'unavailable':
+      return <SetupPage message="Could not connect to server. Try to set it up again." />
+    case 'connected':
       return <Outlet />
   }
 }

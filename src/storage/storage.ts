@@ -13,8 +13,8 @@ export default class Storage<T> {
     })
   }
 
-  protected async load(queryName: string): Promise<T> {
-    return (await (await this.db).get(this.storeName, queryName)) as T
+  protected async load(queryName: string): Promise<T | null> {
+    return (await (await this.db).get(this.storeName, queryName)) as T | null
   }
 
   protected async save(queryName: string, data: T) {

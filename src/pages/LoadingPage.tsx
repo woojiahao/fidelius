@@ -3,9 +3,9 @@ import { Spinner } from '@/components/ui/spinner'
 
 export default function LoadingPage() {
   return (
-    <Card>
+    <Card className="flex text-center">
       <CardTitle>Loading fidelius...</CardTitle>
-      <CardContent>
+      <CardContent className="flex self-center">
         <Spinner />
       </CardContent>
     </Card>

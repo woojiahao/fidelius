@@ -1,7 +1,7 @@
 import {
   BitwardenClient,
   type BitwardenCredentials,
-} from '@/clients/bitwarden-client'
+} from '@/clients/bitwarden/bitwarden-client'
 import { BitwardenCredentialsStore } from '@/services/bitwarden/bitwarden-credentials-store'
 import { BitwardenService } from '@/services/bitwarden/bitwarden-service'
 import {
@@ -14,26 +14,23 @@ import {
   type PropsWithChildren,
 } from 'react'
 
-type AuthState =
-  | { status: 'loading' }
-  | { status: 'setup' }
-  | { status: 'locked' }
-  | { status: 'authenticated'; accessToken: string; expiresAt: number }
+type AuthState = 'loading' | 'setup' | 'locked' | 'unavailable' | 'connected'
 
 type AuthContextState = {
   state: AuthState
-  setup(password: string, credentials: BitwardenCredentials): Promise<void>
+
+  setup(credentials: BitwardenCredentials): Promise<void>
   unlock(password: string): Promise<void>
   logout(): void
   forgetDevice(): Promise<void>
 }
 
 const initialState: AuthContextState = {
-  state: { status: 'loading' },
-  setup: async () => {},
-  unlock: async () => {},
-  logout: () => {},
-  forgetDevice: async () => {},
+  state: 'loading',
+  setup: async () => { },
+  unlock: async () => { },
+  logout: () => { },
+  forgetDevice: async () => { },
 }
 
 const AuthContext = createContext<AuthContextState>(initialState)
@@ -49,25 +46,29 @@ export function AuthProvider({ children }: PropsWithChildren<object>) {
     [bitwardenClient, bitwardenCredentialsStore]
   )
 
-  const [state, setState] = useState<AuthState>({
-    status: 'loading',
-  })
+  const [state, setState] = useState<AuthState>('loading')
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       const hasCredentials = await bitwardenService.hasCredentials()
       console.log(hasCredentials)
-      setState({
-        status: hasCredentials ? 'locked' : 'setup',
-      })
+      setState(hasCredentials ? 'locked' : 'setup')
     })()
   }, [bitwardenService])
 
   const setup = useCallback(
-    async (password: string, credentials: BitwardenCredentials) => {
-      await bitwardenService.setup(password, credentials)
-      setState({
-        status: 'locked',
+    async (credentials: BitwardenCredentials) => {
+      await bitwardenService.setup(credentials)
+      const status = await bitwardenService.status()
+      setState(() => {
+        switch (status) {
+          case "locked":
+            return "locked"
+          case "unlocked":
+            return "connected"
+          default:
+            return "unavailable"
+        }
       })
     },
     [bitwardenService]
@@ -76,23 +77,18 @@ export function AuthProvider({ children }: PropsWithChildren<object>) {
   const unlock = useCallback(
     async (password: string) => {
       const token = await bitwardenService.unlock(password)
-
-      setState({
-        status: 'authenticated',
-        accessToken: token.accessToken,
-        expiresAt: Date.now() + token.expiresIn * 1000,
-      })
+      setState('connected')
     },
     [bitwardenService]
   )
 
   const logout = useCallback(() => {
-    setState({ status: 'locked' })
+    setState('locked')
   }, [])
 
   const forgetDevice = useCallback(async () => {
     await bitwardenService.clearCredentials()
-    setState({ status: 'locked' })
+    setState('locked')
   }, [bitwardenService])
 
   return (

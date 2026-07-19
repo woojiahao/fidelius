@@ -1,10 +1,9 @@
 import type {
-  BitwardenBearerToken,
   BitwardenClient,
   BitwardenCredentials,
-} from '@/clients/bitwarden-client'
+} from '@/clients/bitwarden/bitwarden-client'
+import type { BitwardenStatus } from '@/clients/bitwarden/models/status'
 import type { BitwardenCredentialsStore } from '@/services/bitwarden/bitwarden-credentials-store'
-import { StoredCredentials } from '@/storage/stored-credentials'
 
 export class BitwardenService {
   private readonly credentialsStore: BitwardenCredentialsStore
@@ -22,28 +21,39 @@ export class BitwardenService {
     return await this.credentialsStore.hasCredentials()
   }
 
-  async setup(password: string, credentials: BitwardenCredentials) {
-    const encrypted = await StoredCredentials.from(password, credentials)
-
-    await this.credentialsStore.saveCredentials(encrypted)
+  async status(): Promise<BitwardenStatus['data']['template']['status'] | 'unavailable'> {
+    try {
+      const credentials = await this.requireCredentials()
+      const response = await this.client.status(credentials)
+      return response.success ? response.data.template.status : 'unavailable'
+    } catch {
+      return 'unavailable'
+    }
   }
 
-  async unlock(password: string): Promise<BitwardenBearerToken> {
-    const stored = await this.credentialsStore.loadCredentials()
+  async setup(credentials: BitwardenCredentials) {
+    await this.credentialsStore.saveCredentials(credentials)
+  }
 
+  async unlock(password: string): Promise<boolean> {
+    const stored = await this.credentialsStore.loadCredentials()
     if (!stored) {
       throw new Error('Credentials have not been configured')
     }
 
-    const credentials = await stored.decrypt(password)
-    console.log(credentials)
-
-    const token = await this.client.auth(credentials)
-
-    return token
+    const { success } = await this.client.unlock(stored, password)
+    return success
   }
 
   async clearCredentials() {
     await this.credentialsStore.deleteCredentials()
+  }
+
+  private async requireCredentials(): Promise<BitwardenCredentials> {
+    const credentials = await this.credentialsStore.loadCredentials()
+    if (!credentials) {
+      throw new Error("Credentials not configured")
+    }
+    return credentials
   }
 }

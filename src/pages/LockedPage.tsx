@@ -1,9 +1,17 @@
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
-import { useAuth } from "@/contexts/AuthContext";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useState, useCallback } from "react";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
+import { useAuth } from '@/contexts/AuthContext'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { useState, useCallback } from 'react'
 
 export default function LockedPage() {
   const { unlock } = useAuth()
@@ -19,9 +27,7 @@ export default function LockedPage() {
         return
       }
 
-      if (
-        password.toString().trim() === ''
-      ) {
+      if (password.toString().trim() === '') {
         setError('Password cannot be empty')
         return
       }
@@ -39,7 +45,9 @@ export default function LockedPage() {
     <Card>
       <CardHeader>
         <CardTitle>You are currently locked out of the vault</CardTitle>
-        <CardDescription>Enter the password you used to unlock the vault.</CardDescription>
+        <CardDescription>
+          Enter the password you used to unlock the vault.
+        </CardDescription>
       </CardHeader>
       <form action={setupAction}>
         <CardContent className="flex flex-col gap-4">

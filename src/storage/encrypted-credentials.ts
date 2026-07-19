@@ -1,4 +1,4 @@
-export class StoredCredentials<T> {
+export class EncryptedCredentials<T> {
   readonly salt: string
   readonly iv: string
   readonly cipherText: string
@@ -17,7 +17,7 @@ export class StoredCredentials<T> {
       c.charCodeAt(0)
     )
 
-    const key = await StoredCredentials.deriveKey(password, salt)
+    const key = await EncryptedCredentials.deriveKey(password, salt)
 
     const decrypted = await crypto.subtle.decrypt(
       {
@@ -34,7 +34,7 @@ export class StoredCredentials<T> {
   static async from<T>(
     password: string,
     credentials: T
-  ): Promise<StoredCredentials<T>> {
+  ): Promise<EncryptedCredentials<T>> {
     const salt = crypto.getRandomValues(new Uint8Array(16))
     const iv = crypto.getRandomValues(new Uint8Array(12))
 
@@ -51,7 +51,7 @@ export class StoredCredentials<T> {
       plainText
     )
 
-    return new StoredCredentials<T>(
+    return new EncryptedCredentials<T>(
       btoa(String.fromCharCode(...salt)),
       btoa(String.fromCharCode(...iv)),
       btoa(String.fromCharCode(...new Uint8Array(encrypted)))
@@ -59,11 +59,15 @@ export class StoredCredentials<T> {
   }
 
   static hydrate<T>(credentials: {
-    salt: string,
-    iv: string;
-    cipherText: string;
-  }): StoredCredentials<T> {
-    return new StoredCredentials(credentials.salt, credentials.iv, credentials.cipherText)
+    salt: string
+    iv: string
+    cipherText: string
+  }): EncryptedCredentials<T> {
+    return new EncryptedCredentials(
+      credentials.salt,
+      credentials.iv,
+      credentials.cipherText
+    )
   }
 
   private static async deriveKey(
