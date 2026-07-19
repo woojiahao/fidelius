@@ -67,11 +67,11 @@ export default function SetupPage({ message }: SetupPageProps) {
       </CardHeader>
       <form action={setupAction}>
         <CardContent className="flex flex-col gap-4">
-          {error && <p className="text-red-600">{error}</p>}
+          {error && <p className="text-destructive">{error}</p>}
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="server-url">
-                Server Url<span className="text-red-600">*</span>
+                Server Url<span className="text-destructive">*</span>
               </FieldLabel>
               <FieldDescription>
                 Server url started when you run <code>bw serve</code>

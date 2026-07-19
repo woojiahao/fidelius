@@ -2,7 +2,18 @@ import type {
   BitwardenClient,
   BitwardenCredentials,
 } from '@/clients/bitwarden/bitwarden-client'
-import type { BitwardenStatus } from '@/clients/bitwarden/models/status'
+import {
+  bitwardenFoldersDtoToModel,
+  type BitwardenFolder,
+} from '@/clients/bitwarden/models/folder'
+import {
+  bitwardenItemsDtoToModel,
+  type BitwardenItem,
+} from '@/clients/bitwarden/models/item'
+import {
+  bitwardenStatusDtoToModel,
+  type BitwardenStatus,
+} from '@/clients/bitwarden/models/status'
 import type { BitwardenCredentialsStore } from '@/services/bitwarden/bitwarden-credentials-store'
 
 export class BitwardenService {
@@ -21,14 +32,30 @@ export class BitwardenService {
     return await this.credentialsStore.hasCredentials()
   }
 
-  async status(): Promise<BitwardenStatus['data']['template']['status'] | 'unavailable'> {
+  async vaultStatus(): Promise<BitwardenStatus['status'] | 'unavailable'> {
     try {
       const credentials = await this.requireCredentials()
       const response = await this.client.status(credentials)
-      return response.success ? response.data.template.status : 'unavailable'
+      const model = bitwardenStatusDtoToModel(response)
+      return response.success ? model.status : 'unavailable'
     } catch {
       return 'unavailable'
     }
+  }
+
+  async status(): Promise<BitwardenStatus> {
+    const credentials = await this.requireCredentials()
+    return bitwardenStatusDtoToModel(await this.client.status(credentials))
+  }
+
+  async folders(): Promise<BitwardenFolder[]> {
+    const credentials = await this.requireCredentials()
+    return bitwardenFoldersDtoToModel(await this.client.folders(credentials))
+  }
+
+  async items(): Promise<BitwardenItem[]> {
+    const credentials = await this.requireCredentials()
+    return bitwardenItemsDtoToModel(await this.client.items(credentials))
   }
 
   async setup(credentials: BitwardenCredentials) {
@@ -36,12 +63,8 @@ export class BitwardenService {
   }
 
   async unlock(password: string): Promise<boolean> {
-    const stored = await this.credentialsStore.loadCredentials()
-    if (!stored) {
-      throw new Error('Credentials have not been configured')
-    }
-
-    const { success } = await this.client.unlock(stored, password)
+    const credentials = await this.requireCredentials()
+    const { success } = await this.client.unlock(credentials, password)
     return success
   }
 
@@ -52,7 +75,7 @@ export class BitwardenService {
   private async requireCredentials(): Promise<BitwardenCredentials> {
     const credentials = await this.credentialsStore.loadCredentials()
     if (!credentials) {
-      throw new Error("Credentials not configured")
+      throw new Error('Credentials not configured')
     }
     return credentials
   }

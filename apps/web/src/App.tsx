@@ -24,7 +24,9 @@ export function AppInner() {
     case 'locked':
       return <LockedPage />
     case 'unavailable':
-      return <SetupPage message="Could not connect to server. Try to set it up again." />
+      return (
+        <SetupPage message="Could not connect to server. Try to set it up again." />
+      )
     case 'connected':
       return <VaultPage />
   }

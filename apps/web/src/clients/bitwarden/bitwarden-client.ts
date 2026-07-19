@@ -4,12 +4,20 @@ import {
   UnexpectedResponseError,
 } from '@/clients/bitwarden/errors'
 import {
+  BitwardenFolderNotFoundError,
+  type BitwardenFoldersDto,
+} from '@/clients/bitwarden/models/folder'
+import {
+  BitwardenItemNotFoundError,
+  type BitwardenItemsDto,
+} from '@/clients/bitwarden/models/item'
+import {
   BitwardenStatusNotFoundError,
-  type BitwardenStatus,
+  type BitwardenStatusDto,
 } from '@/clients/bitwarden/models/status'
 import {
   BitwardenUnlockNotFoundError,
-  type BitwardenUnlock,
+  type BitwardenUnlockDto,
 } from '@/clients/bitwarden/models/unlock'
 
 export type BitwardenCredentials = {
@@ -27,7 +35,7 @@ export class BitwardenClient {
         throw new BitwardenStatusNotFoundError()
     }
 
-    return this.expectJson<BitwardenStatus>(response)
+    return this.expectJson<BitwardenStatusDto>(response)
   }
 
   async lock(credentials: BitwardenCredentials, password: string) {
@@ -42,7 +50,7 @@ export class BitwardenClient {
         throw new BitwardenUnlockNotFoundError()
     }
 
-    return this.expectJson<BitwardenUnlock>(response)
+    return this.expectJson<BitwardenUnlockDto>(response)
   }
 
   async unlock(credentials: BitwardenCredentials, password: string) {
@@ -57,7 +65,35 @@ export class BitwardenClient {
         throw new BitwardenUnlockNotFoundError()
     }
 
-    return this.expectJson<BitwardenUnlock>(response)
+    return this.expectJson<BitwardenUnlockDto>(response)
+  }
+
+  async folders(
+    credentials: BitwardenCredentials
+  ): Promise<BitwardenFoldersDto> {
+    const response = await this.get(credentials, '/list/object/folders')
+
+    switch (response.status) {
+      case 400:
+        throw new BadRequestError()
+      case 404:
+        throw new BitwardenFolderNotFoundError()
+    }
+
+    return this.expectJson<BitwardenFoldersDto>(response)
+  }
+
+  async items(credentials: BitwardenCredentials): Promise<BitwardenItemsDto> {
+    const response = await this.get(credentials, '/list/object/items')
+
+    switch (response.status) {
+      case 400:
+        throw new BadRequestError()
+      case 404:
+        throw new BitwardenItemNotFoundError()
+    }
+
+    return this.expectJson<BitwardenItemsDto>(response)
   }
 
   private async get(
@@ -66,11 +102,11 @@ export class BitwardenClient {
   ): Promise<Response> {
     try {
       // TODO: Support localhost or production URL
-      return await fetch(new URL(path, "http://localhost:3000"), {
+      return await fetch(new URL(path, 'http://localhost:3000'), {
         method: 'GET',
         headers: {
-          "X-Bitwarden-Url": credentials.serverUrl
-        }
+          'X-Bitwarden-Url': credentials.serverUrl,
+        },
       })
     } catch {
       throw new ServerUnavailableError()
@@ -85,13 +121,13 @@ export class BitwardenClient {
   ): Promise<Response> {
     try {
       // TODO: Support localhost or production URL
-      return await fetch(new URL(path, "http://localhost:3000"), {
+      return await fetch(new URL(path, 'http://localhost:3000'), {
         ...init,
         body: JSON.stringify(body),
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          "X-Bitwarden-Url": credentials.serverUrl
+          'X-Bitwarden-Url': credentials.serverUrl,
         },
       })
     } catch {

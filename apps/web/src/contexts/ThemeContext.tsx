@@ -6,7 +6,9 @@ import {
   type PropsWithChildren,
 } from 'react'
 
-type Theme = 'dark' | 'light' | 'system'
+type Theme = 'light' | 'dark' | 'system'
+
+const themes: Theme[] = ['light', 'dark', 'system']
 
 type ThemeContextProviderProps = {
   defaultTheme?: Theme
@@ -16,11 +18,13 @@ type ThemeContextProviderProps = {
 type ThemeContextState = {
   theme: Theme
   setTheme: (theme: Theme) => void
+  cycleTheme: () => void
 }
 
 const initialState: ThemeContextState = {
   theme: 'system',
-  setTheme: () => null,
+  setTheme: () => {},
+  cycleTheme: () => {},
 }
 
 const ThemeContext = createContext<ThemeContextState>(initialState)
@@ -31,12 +35,23 @@ export function ThemeProvider({
   storageKey = 'vite-ui-theme',
   ...props
 }: PropsWithChildren<ThemeContextProviderProps>) {
-  const [theme, setTheme] = useState<Theme>(
+  const [theme, setThemeState] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   )
 
+  const setTheme = (theme: Theme) => {
+    localStorage.setItem(storageKey, theme)
+    setThemeState(theme)
+  }
+
+  const cycleTheme = () => {
+    const currentIndex = themes.indexOf(theme)
+    const nextTheme = themes[(currentIndex + 1) % themes.length]
+    setTheme(nextTheme)
+  }
+
   useEffect(() => {
-    const root = window.document.documentElement
+    const root = document.documentElement
 
     root.classList.remove('light', 'dark')
 
@@ -53,26 +68,26 @@ export function ThemeProvider({
     root.classList.add(theme)
   }, [theme])
 
-  const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
-    },
-  }
-
   return (
-    <ThemeContext.Provider {...props} value={value}>
+    <ThemeContext.Provider
+      {...props}
+      value={{
+        theme,
+        setTheme,
+        cycleTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   )
 }
 
-export const useTheme = () => {
+export function useTheme() {
   const context = useContext(ThemeContext)
 
-  if (context == null)
+  if (context == null) {
     throw new Error('useTheme must be used within a ThemeProvider')
+  }
 
   return context
 }

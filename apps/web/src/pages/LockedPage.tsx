@@ -53,7 +53,7 @@ export default function LockedPage() {
       </CardHeader>
       <form action={setupAction}>
         <CardContent className="flex flex-col gap-4">
-          {error && <p className="text-red-600">{error}</p>}
+          {error && <p className="text-destructive">{error}</p>}
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="password">Password</FieldLabel>
