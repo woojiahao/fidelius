@@ -1,6 +1,4 @@
-import {
-  BadRequestError
-} from '@/clients/bitwarden/errors'
+import { BadRequestError } from '@/clients/bitwarden/errors'
 import {
   BitwardenFolderNotFoundError,
   type BitwardenFoldersDto,
@@ -144,9 +142,11 @@ export class BitwardenClient extends Client<BitwardenCredentials> {
     return this.expectJson<BitwardenItemsDto>(response)
   }
 
-  protected headers(credentials: BitwardenCredentials): { [key: string]: string; } {
+  protected headers(credentials: BitwardenCredentials): {
+    [key: string]: string
+  } {
     return {
-      'X-Bitwarden-Url': credentials.serverUrl
+      'X-Bitwarden-Url': credentials.serverUrl,
     }
   }
 }

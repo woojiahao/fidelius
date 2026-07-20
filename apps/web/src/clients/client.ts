@@ -1,4 +1,9 @@
-import { ServerUnavailableError, UnexpectedResponseError } from "@/clients/bitwarden/errors"
+import {
+  ServerUnavailableError,
+  UnexpectedResponseError,
+} from '@/clients/bitwarden/errors'
+
+type Headers = { [key: string]: string }
 
 export abstract class Client<Credentials> {
   private readonly url: string
@@ -7,7 +12,7 @@ export abstract class Client<Credentials> {
     this.url = url
   }
 
-  protected abstract headers(credentials: Credentials, url: string): { [key: string]: string }
+  protected abstract headers(credentials: Credentials, url: string): Headers
 
   protected async get(
     credentials: Credentials,
@@ -16,7 +21,7 @@ export abstract class Client<Credentials> {
     try {
       return await fetch(new URL(path, this.url), {
         method: 'GET',
-        headers: this.setupHeaders(credentials, { })
+        headers: this.setupHeaders(credentials, {}),
       })
     } catch {
       throw new ServerUnavailableError()
@@ -36,7 +41,7 @@ export abstract class Client<Credentials> {
         method: 'POST',
         headers: this.setupHeaders(credentials, {
           'Content-Type': 'application/json',
-        })
+        }),
       })
     } catch {
       throw new ServerUnavailableError()
@@ -56,7 +61,7 @@ export abstract class Client<Credentials> {
         method: 'PUT',
         headers: this.setupHeaders(credentials, {
           'Content-Type': 'application/json',
-        })
+        }),
       })
     } catch {
       throw new ServerUnavailableError()
@@ -74,7 +79,7 @@ export abstract class Client<Credentials> {
     return response.json()
   }
 
-  private setupHeaders(credentials: Credentials, headers: { [key: string]: string }): { [key: string]: string } {
+  private setupHeaders(credentials: Credentials, headers: Headers): Headers {
     const customHeaders = this.headers(credentials, this.url)
     return { ...headers, ...customHeaders }
   }

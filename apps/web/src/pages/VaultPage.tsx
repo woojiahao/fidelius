@@ -109,7 +109,7 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
       setSelectedItems([])
     } else {
       // Select everything
-      setSelectedItems(items.map(item => item.id))
+      setSelectedItems(items.map((item) => item.id))
     }
   }, [selectedItems, items])
 
@@ -156,7 +156,10 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
         <Card className="flex-2">
           <CardHeader>
             <CardTitle className="flex flex-row gap-2 items-center">
-              <Checkbox onCheckedChange={toggleSelectAll} checked={selectedItems.length > 0} />
+              <Checkbox
+                onCheckedChange={toggleSelectAll}
+                checked={selectedItems.length > 0}
+              />
               Items
               {selectedItems.length > 0 &&
                 ` (${selectedItems.length} selected)`}
@@ -198,7 +201,7 @@ function MoveToFolderDialog({
   selectedItems,
   itemNames,
   folderItems,
-  clearSelectedItems
+  clearSelectedItems,
 }: {
   selectedItems: string[]
   itemNames: { [key: string]: string }
@@ -266,7 +269,7 @@ function MoveToFolderDialog({
               onClick={() => moveItemsToFolder(selectedItems, selectedFolderId)}
               disabled={loading}
             >
-              {loading ? <Spinner /> : "Move to folder"}
+              {loading ? <Spinner /> : 'Move to folder'}
             </Button>
           </ButtonGroup>
         </DialogFooter>
