@@ -8,11 +8,11 @@ export function useBitwardenMoveItemToFolder() {
   return useMutation({
     mutationFn: ({ itemId, folderId }: { itemId: string; folderId: string }) =>
       service.moveItemToFolder(itemId, folderId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['folders'],
       })
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['items'],
       })
     },

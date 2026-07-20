@@ -90,7 +90,6 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const selectItem = useCallback(
     (item: BitwardenItem) => () => {
-      console.log('hi', item)
       setSelectedItems((prev) =>
         prev.some((i) => i === item.id)
           ? prev.filter((i) => i !== item.id)
@@ -99,6 +98,20 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
     },
     []
   )
+
+  const clearSelectedItems = useCallback(() => {
+    setSelectedItems([])
+  }, [])
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedItems.length > 0) {
+      // Unselect them all first
+      setSelectedItems([])
+    } else {
+      // Select everything
+      setSelectedItems(items.map(item => item.id))
+    }
+  }, [selectedItems, items])
 
   return (
     <div>
@@ -123,11 +136,11 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
             <CardTitle>Folders</CardTitle>
             <CardAction>
               <ButtonGroup>
-                <Button variant="outline">
+                <Button variant="outline" size="xs">
                   <FolderTreeIcon />
                   Tree view
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" size="xs">
                   <FolderPlusIcon />
                   New Folder
                 </Button>
@@ -142,7 +155,8 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
         </Card>
         <Card className="flex-2">
           <CardHeader>
-            <CardTitle>
+            <CardTitle className="flex flex-row gap-2 items-center">
+              <Checkbox onCheckedChange={toggleSelectAll} checked={selectedItems.length > 0} />
               Items
               {selectedItems.length > 0 &&
                 ` (${selectedItems.length} selected)`}
@@ -157,6 +171,7 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
                     }))}
                     selectedItems={selectedItems}
                     itemNames={itemNames}
+                    clearSelectedItems={clearSelectedItems}
                   />
                 </ButtonGroup>
               )}
@@ -183,10 +198,12 @@ function MoveToFolderDialog({
   selectedItems,
   itemNames,
   folderItems,
+  clearSelectedItems
 }: {
   selectedItems: string[]
   itemNames: { [key: string]: string }
   folderItems: { label: string; value: string }[]
+  clearSelectedItems: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -202,8 +219,9 @@ function MoveToFolderDialog({
         })
       }
 
-      setOpen(false)
       setLoading(false)
+      setOpen(false)
+      clearSelectedItems()
     },
     [moveItemToFolderMutation]
   )
@@ -214,7 +232,7 @@ function MoveToFolderDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="outline" onClick={() => setOpen(true)}>
+          <Button variant="outline" onClick={() => setOpen(true)} size="xs">
             <FolderInputIcon />
             Move to folder
           </Button>
@@ -224,12 +242,12 @@ function MoveToFolderDialog({
         <DialogTitle>Move item(s) to folder</DialogTitle>
         <DialogDescription>
           Move the following items into the same folder:
-          <ul>
-            {selectedItems.map((itemId) => (
-              <li key={itemId}>- {itemNames[itemId]}</li>
-            ))}
-          </ul>
         </DialogDescription>
+        <ul>
+          {selectedItems.map((itemId) => (
+            <li key={itemId}>- {itemNames[itemId]}</li>
+          ))}
+        </ul>
         <Select items={folderItems} onValueChange={setSelectedFolderId}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select a folder" />

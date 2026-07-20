@@ -1,7 +1,5 @@
 import {
-  BadRequestError,
-  ServerUnavailableError,
-  UnexpectedResponseError,
+  BadRequestError
 } from '@/clients/bitwarden/errors'
 import {
   BitwardenFolderNotFoundError,
@@ -20,12 +18,18 @@ import {
   BitwardenUnlockNotFoundError,
   type BitwardenUnlockDto,
 } from '@/clients/bitwarden/models/unlock'
+import { Client } from '@/clients/client'
 
 export type BitwardenCredentials = {
   serverUrl: string
 }
 
-export class BitwardenClient {
+export class BitwardenClient extends Client<BitwardenCredentials> {
+  constructor() {
+    // TODO: Support production vs local URL
+    super('http://localhost:3000')
+  }
+
   async status(credentials: BitwardenCredentials) {
     const response = await this.get(credentials, 'status')
 
@@ -140,75 +144,9 @@ export class BitwardenClient {
     return this.expectJson<BitwardenItemsDto>(response)
   }
 
-  private async get(
-    credentials: BitwardenCredentials,
-    path: string
-  ): Promise<Response> {
-    try {
-      // TODO: Support localhost or production URL
-      return await fetch(new URL(path, 'http://localhost:3000'), {
-        method: 'GET',
-        headers: {
-          'X-Bitwarden-Url': credentials.serverUrl,
-        },
-      })
-    } catch {
-      throw new ServerUnavailableError()
+  protected headers(credentials: BitwardenCredentials): { [key: string]: string; } {
+    return {
+      'X-Bitwarden-Url': credentials.serverUrl
     }
-  }
-
-  private async post<T extends object>(
-    credentials: BitwardenCredentials,
-    path: string,
-    body: T,
-    init?: RequestInit
-  ): Promise<Response> {
-    try {
-      // TODO: Support localhost or production URL
-      return await fetch(new URL(path, 'http://localhost:3000'), {
-        ...init,
-        body: JSON.stringify(body),
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Bitwarden-Url': credentials.serverUrl,
-        },
-      })
-    } catch {
-      throw new ServerUnavailableError()
-    }
-  }
-
-  private async put<T extends object>(
-    credentials: BitwardenCredentials,
-    path: string,
-    body: T,
-    init?: RequestInit
-  ): Promise<Response> {
-    try {
-      // TODO: Support localhost or production URL
-      return await fetch(new URL(path, 'http://localhost:3000'), {
-        ...init,
-        body: JSON.stringify(body),
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Bitwarden-Url': credentials.serverUrl,
-        },
-      })
-    } catch {
-      throw new ServerUnavailableError()
-    }
-  }
-
-  private async expectJson<T>(
-    response: Response,
-    expectedStatus: number = 200
-  ): Promise<T> {
-    if (response.status !== expectedStatus) {
-      throw new UnexpectedResponseError(response.status, await response.text())
-    }
-
-    return response.json()
   }
 }
