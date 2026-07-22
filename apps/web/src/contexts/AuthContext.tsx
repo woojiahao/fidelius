@@ -21,6 +21,7 @@ type AuthContextState = {
   service: BitwardenService
 
   setup(credentials: BitwardenCredentials): Promise<void>
+  lock(): Promise<void>
   unlock(password: string): Promise<void>
   logout(): void
   forgetDevice(): Promise<void>
@@ -30,6 +31,7 @@ const initialState: AuthContextState = {
   state: 'loading',
   service: {} as BitwardenService,
   setup: async () => {},
+  lock: async () => {},
   unlock: async () => {},
   logout: () => {},
   forgetDevice: async () => {},
@@ -103,13 +105,18 @@ export function AuthProvider({ children }: PropsWithChildren<object>) {
     [bitwardenService]
   )
 
+  const lock = useCallback(async () => {
+    const outcome = await bitwardenService.lock()
+    setState(outcome ? 'locked' : 'unavailable')
+  }, [bitwardenService])
+
   const logout = useCallback(() => {
     setState('locked')
   }, [])
 
   const forgetDevice = useCallback(async () => {
     await bitwardenService.clearCredentials()
-    setState('locked')
+    setState('setup')
   }, [bitwardenService])
 
   return (
@@ -118,6 +125,7 @@ export function AuthProvider({ children }: PropsWithChildren<object>) {
         state,
         service: bitwardenService,
         setup,
+        lock,
         unlock,
         logout,
         forgetDevice,

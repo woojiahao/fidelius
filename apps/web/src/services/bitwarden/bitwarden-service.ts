@@ -73,6 +73,12 @@ export class BitwardenService {
     return success
   }
 
+  async lock(): Promise<boolean> {
+    const credentials = await this.requireCredentials()
+    const { success } = await this.client.lock(credentials)
+    return success
+  }
+
   async clearCredentials() {
     await this.credentialsStore.deleteCredentials()
   }

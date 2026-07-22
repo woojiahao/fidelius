@@ -12,13 +12,16 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useState, useCallback } from 'react'
+import { Spinner } from '@/components/ui/spinner'
 
 export default function LockedPage() {
   const { unlock } = useAuth()
   const [error, setError] = useState<string>()
+  const [loading, setLoading] = useState(false)
 
   const setupAction = useCallback(
-    (form: FormData) => {
+    async (form: FormData) => {
+      setLoading(true)
       const password = form.get('password')
       setError(undefined)
 
@@ -35,9 +38,11 @@ export default function LockedPage() {
       }
 
       try {
-        unlock(passwordString)
+        await unlock(passwordString)
       } catch (e) {
-        setError(String(e))
+        setError('Invalid master password. Try again.')
+      } finally {
+        setLoading(false)
       }
     },
     [unlock]
@@ -52,7 +57,7 @@ export default function LockedPage() {
         </CardDescription>
       </CardHeader>
       <form action={setupAction}>
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-col gap-4 mb-4">
           {error && <p className="text-destructive">{error}</p>}
           <FieldGroup>
             <Field>
@@ -69,7 +74,7 @@ export default function LockedPage() {
         </CardContent>
         <CardFooter>
           <CardAction>
-            <Button type="submit">Unlock</Button>
+            <Button type="submit">{loading ? <Spinner /> : 'Unlock'}</Button>
           </CardAction>
         </CardFooter>
       </form>

@@ -66,7 +66,7 @@ export default function SetupPage({ message }: SetupPageProps) {
         </div>
       </CardHeader>
       <form action={setupAction}>
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-col gap-4 mb-4">
           {error && <p className="text-destructive">{error}</p>}
           <FieldGroup>
             <Field>

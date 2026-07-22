@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/fidelius/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Spinner } from '@/components/ui/spinner'
+import { useAuth } from '@/contexts/AuthContext'
 import { useCallback, useMemo, useState } from 'react'
 
 export default function VaultPage() {
@@ -48,6 +49,8 @@ type VaultPageInnerProps = {
 }
 
 function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
+  const { lock, forgetDevice } = useAuth()
+
   const [
     moveToFolderConfirmationDialogOpen,
     setMoveToFolderConfirmationDialogOpen,
@@ -94,9 +97,10 @@ function VaultPageInner({ status, folders, items }: VaultPageInnerProps) {
         <div>
           <ButtonGroup>
             <ButtonGroup>
-              <Button>Lock Vault</Button>
-              <Button variant="destructive">Forget Me</Button>
-              <Button variant="secondary">Logout</Button>
+              <Button onClick={lock}>Lock Vault</Button>
+              <Button variant="destructive" onClick={forgetDevice}>
+                Forget Me
+              </Button>
             </ButtonGroup>
             <ButtonGroup>
               <ThemeToggle />

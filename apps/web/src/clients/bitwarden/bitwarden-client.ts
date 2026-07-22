@@ -41,10 +41,8 @@ export class BitwardenClient extends Client<BitwardenCredentials> {
     return this.expectJson<BitwardenStatusDto>(response)
   }
 
-  async lock(credentials: BitwardenCredentials, password: string) {
-    const response = await this.post(credentials, 'lock', {
-      password,
-    })
+  async lock(credentials: BitwardenCredentials) {
+    const response = await this.post(credentials, 'lock', {})
 
     switch (response.status) {
       case 400:
