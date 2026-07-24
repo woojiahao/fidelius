@@ -63,6 +63,11 @@ export class BitwardenService {
     await this.client.moveItemToFolder(credentials, itemId, folderId)
   }
 
+  async createFolder(folderName: string) {
+    const credentials = await this.requireCredentials()
+    await this.client.createFolder(credentials, folderName)
+  }
+
   async setup(credentials: BitwardenCredentials) {
     await this.credentialsStore.saveCredentials(credentials)
   }

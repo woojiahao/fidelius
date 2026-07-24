@@ -1,6 +1,7 @@
 import { BadRequestError } from '@/clients/bitwarden/errors'
 import {
   BitwardenFolderNotFoundError,
+  type BitwardenFolderDto,
   type BitwardenFoldersDto,
 } from '@/clients/bitwarden/models/folder'
 import {
@@ -138,6 +139,21 @@ export class BitwardenClient extends Client<BitwardenCredentials> {
     }
 
     return this.expectJson<BitwardenItemsDto>(response)
+  }
+
+  async createFolder(credentials: BitwardenCredentials, folderName: string) {
+    const response = await this.post(credentials, '/object/folder', {
+      name: folderName,
+    })
+
+    switch (response.status) {
+      case 400:
+        throw new BadRequestError()
+      case 404:
+        throw new BitwardenFolderNotFoundError()
+    }
+
+    return this.expectJson<BitwardenFolderDto>(response)
   }
 
   protected headers(credentials: BitwardenCredentials): {
